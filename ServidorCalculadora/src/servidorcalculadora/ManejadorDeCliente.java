@@ -3,16 +3,12 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package servidorcalculadora;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-/**
- *
- * @author daniel
- */
-
 
 public class ManejadorDeCliente extends Thread {
     private final Socket cliente;
@@ -26,32 +22,32 @@ public class ManejadorDeCliente extends Thread {
         try (BufferedReader in = new BufferedReader(new InputStreamReader(cliente.getInputStream()));
              PrintWriter out = new PrintWriter(cliente.getOutputStream(), true)) {
 
+            out.println(ServidorCalculadora.encrypt("Bienvenido al servidor de calculadora. Ingrese operaciones, 'historial' para ver el historial o 'salir' para terminar:"));
+
             String operacion;
-            out.println("Bienvenido al servidor de calculadora. Ingrese operaciones, 'historial' para ver el historial o 'salir' para terminar:");
-            while ((operacion = in.readLine()) != null && !operacion.equalsIgnoreCase("salir")) {
+            while ((operacion = ServidorCalculadora.decrypt(in.readLine())) != null && !operacion.equalsIgnoreCase("salir")) {
                 if (operacion.equalsIgnoreCase("historial")) {
                     for (String entry : Historial.getHistorialOperaciones()) {
-                        out.println(entry);
+                        out.println(ServidorCalculadora.encrypt(entry));
                     }
-                    out.println(); // Para indicar el final del historial
+                    out.println(ServidorCalculadora.encrypt("")); // Para indicar el final del historial
                 } else {
-                    Historial.addLog("Operación solicitada: " + operacion);
                     try {
                         double resultado = EvaluadorOperacion.evaluarOperacion(operacion);
                         Historial.addOperacion(operacion, resultado);
-                        Historial.addLog("Resultado: " + resultado);
-                        out.println("Resultado: " + resultado);
+                        out.println(ServidorCalculadora.encrypt("Resultado: " + resultado));
                     } catch (Exception e) {
-                        out.println("Error: " + e.getMessage());
+                        out.println(ServidorCalculadora.encrypt("Error: " + e.getMessage()));
                     }
                 }
             }
         } catch (IOException e) {
             System.err.println("Error al manejar al cliente: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
             try {
                 cliente.close();
-                Historial.addLog("Cliente desconectado: " + cliente.getInetAddress().getHostAddress());
             } catch (IOException e) {
                 System.err.println("Error al cerrar la conexión con el cliente: " + e.getMessage());
             }

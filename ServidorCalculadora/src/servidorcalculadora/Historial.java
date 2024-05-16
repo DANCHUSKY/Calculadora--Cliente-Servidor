@@ -3,17 +3,12 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package servidorcalculadora;
+
 import java.util.Deque;
 import java.util.List;
 import java.util.Collections;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedDeque;
-
-/**
- *
- * @author daniel
- */
-
 
 public class Historial {
     private static Deque<String> historialOperaciones = new ConcurrentLinkedDeque<>();
