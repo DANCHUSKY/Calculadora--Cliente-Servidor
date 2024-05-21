@@ -5,31 +5,59 @@
 package servidorcalculadora;
 
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
+
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.security.*;
 import java.util.Base64;
 
 public class ServidorCalculadora {
     static final int puerto = 5003;
-    private static final String KEY = "1234567890123456"; // Clave de 16 bytes
+    private static final String AES_KEY = "1234567890123456"; // Clave de 16 bytes
+    private static KeyPair keyPair;
 
-    public static String encrypt(String data) throws Exception {
-        SecretKeySpec secretKey = new SecretKeySpec(KEY.getBytes(), "AES");
+    static {
+        try {
+            keyPair = generarClaveRSA();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static KeyPair generarClaveRSA() throws NoSuchAlgorithmException {
+        KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+        generator.initialize(2048);
+        return generator.generateKeyPair();
+    }
+
+    public static String encryptAES(String data) throws Exception {
+        SecretKeySpec secretKey = new SecretKeySpec(AES_KEY.getBytes(), "AES");
         Cipher cipher = Cipher.getInstance("AES");
         cipher.init(Cipher.ENCRYPT_MODE, secretKey);
         byte[] encrypted = cipher.doFinal(data.getBytes());
         return Base64.getEncoder().encodeToString(encrypted);
     }
 
-    public static String decrypt(String encryptedData) throws Exception {
-        SecretKeySpec secretKey = new SecretKeySpec(KEY.getBytes(), "AES");
+    public static String decryptAES(String encryptedData) throws Exception {
+        SecretKeySpec secretKey = new SecretKeySpec(AES_KEY.getBytes(), "AES");
         Cipher cipher = Cipher.getInstance("AES");
         cipher.init(Cipher.DECRYPT_MODE, secretKey);
         byte[] decoded = Base64.getDecoder().decode(encryptedData);
         byte[] decrypted = cipher.doFinal(decoded);
         return new String(decrypted);
+    }
+
+    public static String decryptRSA(String data) throws Exception {
+        Cipher cipher = Cipher.getInstance("RSA");
+        cipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
+        byte[] decrypted = cipher.doFinal(Base64.getDecoder().decode(data));
+        return new String(decrypted);
+    }
+
+    public static String getPublicKey() {
+        return Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded());
     }
 
     public static void main(String[] args) {
@@ -46,3 +74,4 @@ public class ServidorCalculadora {
         }
     }
 }
+

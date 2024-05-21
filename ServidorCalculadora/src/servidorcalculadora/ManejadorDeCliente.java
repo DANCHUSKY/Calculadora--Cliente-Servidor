@@ -22,22 +22,24 @@ public class ManejadorDeCliente extends Thread {
         try (BufferedReader in = new BufferedReader(new InputStreamReader(cliente.getInputStream()));
              PrintWriter out = new PrintWriter(cliente.getOutputStream(), true)) {
 
-            out.println(ServidorCalculadora.encrypt("Bienvenido al servidor de calculadora. Ingrese operaciones, 'historial' para ver el historial o 'salir' para terminar:"));
+            out.println(ServidorCalculadora.getPublicKey());
 
             String operacion;
-            while ((operacion = ServidorCalculadora.decrypt(in.readLine())) != null && !operacion.equalsIgnoreCase("salir")) {
+            while ((operacion = in.readLine()) != null && !operacion.equalsIgnoreCase("salir")) {
+                operacion = ServidorCalculadora.decryptRSA(operacion);
+
                 if (operacion.equalsIgnoreCase("historial")) {
                     for (String entry : Historial.getHistorialOperaciones()) {
-                        out.println(ServidorCalculadora.encrypt(entry));
+                        out.println(ServidorCalculadora.encryptAES(entry));
                     }
-                    out.println(ServidorCalculadora.encrypt("")); // Para indicar el final del historial
+                    out.println(ServidorCalculadora.encryptAES("")); // Para indicar el final del historial
                 } else {
                     try {
                         double resultado = EvaluadorOperacion.evaluarOperacion(operacion);
                         Historial.addOperacion(operacion, resultado);
-                        out.println(ServidorCalculadora.encrypt("Resultado: " + resultado));
+                        out.println(ServidorCalculadora.encryptAES("Resultado: " + resultado));
                     } catch (Exception e) {
-                        out.println(ServidorCalculadora.encrypt("Error: " + e.getMessage()));
+                        out.println(ServidorCalculadora.encryptAES("Error: " + e.getMessage()));
                     }
                 }
             }
